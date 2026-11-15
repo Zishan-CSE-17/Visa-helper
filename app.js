@@ -344,8 +344,9 @@
 
   /* ---------- fill ---------- */
   function mapKeyValue(f) {
-    if (f.key === 'fullname') return [data.f.family, data.f.given].filter(Boolean).join(' ');
-    return data.f[f.key] || '';
+    const k = f.src || f.key;
+    if (k === 'fullname') return [data.f.family, data.f.given].filter(Boolean).join(' ');
+    return data.f[k] || '';
   }
 
   async function runFill(test) {

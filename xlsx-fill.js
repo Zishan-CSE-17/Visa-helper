@@ -234,17 +234,24 @@
   /* Normal items: the answer box to the right of the label. On the ISA forms the English label overflows
      across several empty single cells, and the real box is the first MERGED range after them. So we skip plain
      spacer cells until we reach a merged box, stopping at the next printed text.
-     Table headers (below:true): first empty row under the header. */
-  Template.prototype._target = function (hit, below) {
+     mode 'below': first empty row under a table header. 'down': same scan, but one row lower (box sits under the label).
+     'left': the box just left of the label (e.g. amount before "Yen"). */
+  Template.prototype._target = function (hit, mode) {
     const sh = this.sheets[hit.si], m = mergeOf(sh, hit.col, hit.row);
     function result(mm) { return { si: hit.si, addr: addrOf(mm.c1, mm.r1) }; }
-    if (below) {
+    if (mode === 'below') {
       const cell = mergeOf(sh, m.c1, m.r2 + 1);
       return this._empty(sh, cell.c1, cell.r1) ? result(cell) : null;
     }
+    if (mode === 'left') {
+      if (m.c1 < 2) return null;
+      const cell = mergeOf(sh, m.c1 - 1, m.r1);
+      return this._empty(sh, cell.c1, cell.r1) ? result(cell) : null;
+    }
+    const row = mode === 'down' ? m.r2 + 1 : m.r1;
     let col = m.c2 + 1, firstEmpty = null;
     for (let n = 0; n < 40 && col <= 16384; n++) {
-      const cell = mergeOf(sh, col, m.r1);
+      const cell = mergeOf(sh, col, row);
       if (!this._empty(sh, cell.c1, cell.r1)) break;          // next printed label: stop
       if (cell.c2 > cell.c1) return result(cell);              // first merged box wins
       if (!firstEmpty) firstEmpty = cell;
@@ -274,12 +281,21 @@
     return out.join(',');
   };
 
-  /* Returns { key: { spec, label } } for every field whose label chain was found. */
+  /* Returns { key: { spec, label } } for every field whose label chain was found.
+     A field searches the first sheet (applicant part 1) unless it names f.sheet, a regex for the sheet name
+     (for example the employer sheet). Other sheets repeat the same words, so each field is kept to its own sheet. */
   Template.prototype.guess = function (fields) {
-    /* Only the first sheet (applicant part 1) is searched: other sheets hold the employer/part 2/part 3 forms with the same words. */
-    const labels = this._scanLabels().filter(function (l) { return l.si === 0; }), out = {}, self = this, multi = false;
+    const all = this._scanLabels(), out = {}, self = this;
     fields.forEach(function (f) {
       if (!f.hint) return;
+      if (f.type === 'select') return;   // circle options (Male/Female etc.): set by hand, a text guess lands in the wrong place
+      let ok;
+      if (f.sheet) {
+        let srx; try { srx = new RegExp(f.sheet); } catch (e) { return; }
+        const set = {}; self.sheets.forEach(function (sh, i) { if (srx.test(sh.name)) set[i] = true; });
+        ok = function (l) { return set[l.si]; };
+      } else ok = function (l) { return l.si === 0; };
+      const labels = all.filter(ok);
       let prev = null, hit = null;
       for (let i = 0; i < f.hint.length; i++) {
         const step = f.hint[i];
@@ -291,15 +307,16 @@
         prev = hit;
       }
       if (!hit) return;
-      if (f.type === 'select') return;   // circle options (Male/Female etc.): set by hand, a text guess lands in the wrong place
-      const below = !!f.hint[f.hint.length - 1].below;
-      if (f.type === 'date' && !below) {
+      const lastStep = f.hint[f.hint.length - 1];
+      const mode = lastStep.below ? 'below' : lastStep.down ? 'down' : lastStep.left ? 'left' : '';
+      const label = hit.text.split(/\r?\n/).pop().trim();
+      if (f.type === 'date' && !mode) {
         const ds = self._dateTargets(hit);
-        if (ds) { out[f.key] = { spec: ds, label: hit.text.split(/\r?\n/).pop().trim() }; return; }
+        if (ds) { out[f.key] = { spec: ds, label: label }; return; }
       }
-      const tg = self._target(hit, below);
+      const tg = self._target(hit, mode);
       if (!tg) return;
-      out[f.key] = { spec: (multi ? self.sheets[tg.si].name + '!' : '') + tg.addr, label: hit.text.split(/\r?\n/).pop().trim() };
+      out[f.key] = { spec: (tg.si !== 0 ? self.sheets[tg.si].name + '!' : '') + tg.addr, label: label };
     });
     return out;
   };

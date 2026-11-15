@@ -76,6 +76,9 @@
     emptel: { key: 'emptel', no: '-', label: 'Employer telephone', type: 'tel', note: true, hint: null },
     empjob: { key: 'empjob', no: '-', label: 'Job title / duties', type: 'text', note: true, hint: null },
     empstart: { key: 'empstart', no: '-', label: 'Employment start date', type: 'date', note: true, hint: null },
+    school: { key: 'school', no: '-', label: 'Last school (name)', type: 'text', note: true, hint: null },
+    graddate: { key: 'graddate', no: '-', label: 'Graduation date (or expected)', type: 'date', note: true, hint: null },
+    emppos: { key: 'emppos', no: '-', label: 'Position / title at the company', type: 'text', note: true, hint: null },
     empsalary: { key: 'empsalary', no: '-', label: 'Monthly salary (JPY)', type: 'text', note: true, hint: null }
   };
 
@@ -90,11 +93,12 @@
     const out = BASE.map(function (s) { return { title: s.title, fields: s.fields.map(function (k) { return F[k]; }) }; });
     if (mode === 'change') {
       out.push({ title: 'What you are applying for', fields: ['newstatus', 'newperiod', 'reasonChange', 'crim', 'crimdetail'].map(function (k) { return F[k]; }) });
-      out.push({ title: 'New workplace (notes for part 2 and your employer’s forms)',
-        fields: ['empname', 'empaddr', 'emptel', 'empjob', 'empstart', 'empsalary'].map(function (k) { return F[k]; }) });
     } else {
       out.push({ title: 'What you are applying for', fields: ['desired', 'reasonExt', 'crim', 'crimdetail'].map(function (k) { return F[k]; }) });
     }
+    out.push({ title: 'Education (for part 2)', fields: ['school', 'graddate'].map(function (k) { return F[k]; }) });
+    out.push({ title: mode === 'change' ? 'New workplace (for part 2 and your employer’s forms)' : 'Workplace (for part 2 and your employer’s forms, if any)',
+      fields: ['empname', 'empaddr', 'emptel', 'empjob', 'emppos', 'empstart', 'empsalary'].map(function (k) { return F[k]; }) });
     return out;
   };
 
@@ -108,6 +112,24 @@
     { key: 'rc', label: 'Residence card number', type: 'text', upper: true, hint: [{ rx: 'residence card number', last: true, below: true }] }
   ];
 
+  // Other sheets of the workbook (applicant part 2, employer part 1). Values come from f.src. Each searches only sheets whose name matches f.sheet.
+  const P2 = '申請人用.?[２2]', ORG = '所属機関用';
+  VH.EXTRA = [
+    { key: 'p2.empname', src: 'empname', no: 'P2', label: 'Part 2: workplace name', type: 'text', sheet: P2, hint: [{ rx: '^name$' }] },
+    { key: 'p2.empaddr', src: 'empaddr', no: 'P2', label: 'Part 2: workplace address', type: 'text', sheet: P2, hint: [{ rx: '^address$' }] },
+    { key: 'p2.emptel', src: 'emptel', no: 'P2', label: 'Part 2: workplace telephone', type: 'tel', sheet: P2, hint: [{ rx: '^address$' }, { rx: '^telephone no' }] },
+    { key: 'p2.school', src: 'school', no: 'P2', label: 'Part 2: last school name', type: 'text', sheet: P2, hint: [{ rx: '^name of school$' }] },
+    { key: 'p2.grad', src: 'graddate', no: 'P2', label: 'Part 2: graduation date', type: 'date', sheet: P2, hint: [{ rx: 'date of graduation' }] },
+    { key: 'o.name', src: 'fullname', no: 'ORG', label: 'Employer form: your name', type: 'text', sheet: ORG, hint: [{ rx: '^name$' }] },
+    { key: 'o.rc', src: 'rcno', no: 'ORG', label: 'Employer form: your residence card number', type: 'text', sheet: ORG, hint: [{ rx: '^residence card number$' }] },
+    { key: 'o.empname', src: 'empname', no: 'ORG', label: 'Employer form: company name', type: 'text', sheet: ORG, hint: [{ rx: '^name$' }, { rx: '^name$', down: true }] },
+    { key: 'o.empaddr', src: 'empaddr', no: 'ORG', label: 'Employer form: company address', type: 'text', sheet: ORG, hint: [{ rx: '^address$' }] },
+    { key: 'o.emptel', src: 'emptel', no: 'ORG', label: 'Employer form: company telephone', type: 'tel', sheet: ORG, hint: [{ rx: '^telephone no' }] },
+    { key: 'o.job', src: 'empjob', no: 'ORG', label: 'Employer form: details of activities', type: 'text', sheet: ORG, hint: [{ rx: 'details of activities', below: true }] },
+    { key: 'o.pos', src: 'emppos', no: 'ORG', label: 'Employer form: position / title', type: 'text', sheet: ORG, hint: [{ rx: '^position' }] },
+    { key: 'o.salary', src: 'empsalary', no: 'ORG', label: 'Employer form: salary (yen)', type: 'text', sheet: ORG, hint: [{ rx: '^yen$', left: true }] }
+  ];
+
   VH.FULLNAME = { key: 'fullname', no: '3', label: 'Full name (family name + given name, one box)', type: 'text', derived: true, hint: [{ rx: '^name$' }] };
 
   // Every field that can be written into the official Excel, for the cell-map table.
@@ -117,6 +139,7 @@
       s.fields.forEach(function (f) { if (!f.note && f.key !== 'crimdetail' && f.key !== 'family' && f.key !== 'given') list.push(f); });
     });
     list.push(VH.FULLNAME);
+    VH.EXTRA.forEach(function (f) { list.push(f); });
     VH.FAMILY.forEach(function (f) { list.push({ key: 'fam.' + f.key, fam: f.key, no: '16', label: 'Family table: ' + f.label,
       type: f.type, hint: f.hint }); });
     return list;
