@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="theme-color" content="#1877f2">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Fill in your Japan visa application details once and write them straight into the official Excel form. Private: nothing leaves your device.">
+<title>Japan Visa Form Helper</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar no-print">
+  <div class="topbar-in">
+    <div class="logo" aria-hidden="true">J</div>
+    <div class="brand">Visa Helper</div>
+    <span id="saveChip" class="chip" role="status">Ready</span>
+    <button type="button" id="btnInstall" class="btn small ghost" hidden>Install app</button>
+  </div>
+  <div class="progress" role="progressbar" aria-label="Form completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="bar" class="bar"></div></div>
+  <nav class="steps" aria-label="Steps">
+    <a href="#s-get">1 Get form</a><a href="#s-details">2 Details</a><a href="#s-fill">3 Fill Excel</a><a href="#s-more">4 More</a>
+  </nav>
+</header>
+
+<noscript><p class="noscript">This tool needs JavaScript. Please enable it in your browser.</p></noscript>
+
+<main id="main" class="no-print">
+  <div class="hero">
+    <h1>Japan visa forms, made easy</h1>
+    <p>Type your details once. The site writes them into the <strong>official Excel form</strong> and gives you the filled file.</p>
+    <p class="privacy">Private by design: your passport and residence card details never leave this device.</p>
+  </div>
+
+  <section class="card" id="s-get" aria-labelledby="h-get">
+    <div class="card-head"><span class="step">1</span><h2 id="h-get">Get the official Excel form</h2></div>
+    <p>Download the form for your status from the Immigration Services Agency (ISA). Always use the newest file.</p>
+    <ul class="links">
+      <li><a href="https://www.isa.go.jp/en/applications/procedures/16-3-1.html" target="_blank" rel="noopener noreferrer">Extension of Period of Stay: all forms (English)</a></li>
+      <li><a href="https://www.moj.go.jp/isa/applications/procedures/16-3-1.html" target="_blank" rel="noopener noreferrer">Extension of Period of Stay: all forms (Japanese)</a></li>
+      <li><a href="https://www.moj.go.jp/isa/content/930003874.pdf" target="_blank" rel="noopener noreferrer">Change of Status of Residence: applicant part 1 (sample PDF)</a></li>
+      <li><a href="https://www.moj.go.jp/isa/applications/procedures/16-3.html" target="_blank" rel="noopener noreferrer">Procedure guide and required documents</a></li>
+    </ul>
+    <p class="hint">For Student to work visa you also need the part 2 form for your new job type and your employer’s documents. Apply before your period of stay ends (from 3 months before).</p>
+  </section>
+
+  <section class="card" id="s-details" aria-labelledby="h-details">
+    <div class="card-head"><span class="step">2</span><h2 id="h-details">Your details</h2></div>
+    <div class="toolbar">
+      <div class="field">
+        <label for="mode">Which application?</label>
+        <select id="mode">
+          <option value="change">Change of status (Student → work visa)</option>
+          <option value="extension">Extension of period of stay</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="dateFmt">Date style in Excel</label>
+        <select id="dateFmt">
+          <option value="iso">2026-11-15</option>
+          <option value="dmy">15/11/2026</option>
+          <option value="text">15 Nov 2026</option>
+        </select>
+      </div>
+      <label class="switch"><input type="checkbox" id="bnToggle"> <span>বাংলা সাহায্য (Bengali help)</span></label>
+    </div>
+    <p class="hint" id="progText">0 answers filled</p>
+    <p class="hint">Write in English letters exactly as in your passport. Answers save automatically on this device.</p>
+    <form id="form" autocomplete="off" novalidate></form>
+    <section class="group" aria-labelledby="h-fam">
+      <h3 id="h-fam">Item 16: Family members in Japan</h3>
+      <div id="famBox"></div>
+      <button type="button" id="btnAddFam" class="btn small secondary">+ Add family member</button>
+    </section>
+  </section>
+
+  <section class="card" id="s-fill" aria-labelledby="h-fill">
+    <div class="card-head"><span class="step">3</span><h2 id="h-fill">Fill your official Excel</h2></div>
+    <p>Choose the Excel file you downloaded in step 1. The file stays on your device. Only the cells you fill are changed; the rest of the form stays exactly as ISA made it.</p>
+    <div class="buttons">
+      <label class="btn">Choose official Excel (.xlsx)<input type="file" id="xlsIn" accept=".xlsx,.xlsm" hidden></label>
+    </div>
+    <p class="hint" id="xlsName">No file chosen.</p>
+
+    <div id="mapWrap" hidden>
+      <details class="mapdetails">
+        <summary><span>Where each answer goes</span> <span id="mapSummary" class="chip"></span></summary>
+        <p class="hint">The site looked for the printed labels on the form and picked the empty box next to each one. Check the list and fix any cell. Cell examples: <b>C5</b> · <b>Sheet2!C5</b> · dates in separate boxes <b>C5,E5,G5</b> (year, month, day) · circle options <b>Male=E5;Female=G5</b>. Leave a box empty to skip it.</p>
+        <div id="mapRows"></div>
+        <div class="buttons">
+          <button type="button" id="btnReset" class="btn small secondary">Reset to auto-detect</button>
+          <button type="button" id="btnMapSave" class="btn small secondary">Save cell map (.json)</button>
+          <label class="btn small secondary">Load cell map<input type="file" id="mapLoad" accept=".json,application/json" hidden></label>
+        </div>
+      </details>
+      <label class="check"><input type="checkbox" id="chkOverwrite"> Allow overwriting cells that already contain text</label>
+      <div class="buttons">
+        <button type="button" id="btnFill" class="btn green" disabled>Download filled Excel</button>
+        <button type="button" id="btnTest" class="btn secondary" disabled>Test: show where answers go</button>
+      </div>
+      <div id="report" class="report" hidden aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="card" id="s-more" aria-labelledby="h-more">
+    <div class="card-head"><span class="step">4</span><h2 id="h-more">More options</h2></div>
+    <div class="buttons">
+      <button type="button" id="btnXlsx" class="btn secondary">Download simple data list (Excel)</button>
+      <button type="button" id="btnPdf" class="btn secondary">Save data list as PDF / Print</button>
+    </div>
+    <div class="buttons">
+      <button type="button" id="btnSave" class="btn secondary">Save my data (.json)</button>
+      <label class="btn secondary">Load my data<input type="file" id="fileLoad" accept=".json,application/json" hidden></label>
+      <button type="button" id="btnClear" class="btn outline-danger">Clear everything</button>
+    </div>
+    <p class="hint">Back up with "Save my data" and load it on another phone or computer. Share the site link with friends: each person’s data stays in their own browser.</p>
+  </section>
+</main>
+
+<section id="sheet" class="print-only" aria-label="Application data sheet"></section>
+
+<footer class="no-print">
+  <p>Unofficial helper tool. It does not replace the official form. Check every value against the current ISA instructions before you submit.</p>
+</footer>
+
+<div id="toasts" class="toasts no-print" aria-live="polite"></div>
+
+<script src="jszip.min.js"></script>
+<script src="schema.js"></script>
+<script src="xlsx-fill.js"></script>
+<script src="xlsx-write.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
