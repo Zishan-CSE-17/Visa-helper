@@ -231,17 +231,47 @@
   };
   function after(a, b) { return a.si > b.si || (a.si === b.si && (a.row > b.row || (a.row === b.row && a.col > b.col))); }
 
-  /* Normal items: the empty box to the right of the label. Table headers (below:true): first empty row under the header.
-     No other fallback, because guessing a spacer cell is worse than offering nothing. */
+  /* Normal items: the answer box to the right of the label. On the ISA forms the English label overflows
+     across several empty single cells, and the real box is the first MERGED range after them. So we skip plain
+     spacer cells until we reach a merged box, stopping at the next printed text.
+     Table headers (below:true): first empty row under the header. */
   Template.prototype._target = function (hit, below) {
     const sh = this.sheets[hit.si], m = mergeOf(sh, hit.col, hit.row);
-    function result(col, row) {
-      const mm = mergeOf(sh, col, row);
-      return { si: hit.si, addr: addrOf(mm.c1, mm.r1) };
+    function result(mm) { return { si: hit.si, addr: addrOf(mm.c1, mm.r1) }; }
+    if (below) {
+      const cell = mergeOf(sh, m.c1, m.r2 + 1);
+      return this._empty(sh, cell.c1, cell.r1) ? result(cell) : null;
     }
-    const col = below ? m.c1 : m.c2 + 1, row = below ? m.r2 + 1 : m.r1;
-    const cell = mergeOf(sh, col, row);
-    return this._empty(sh, cell.c1, cell.r1) ? result(col, row) : null;
+    let col = m.c2 + 1, firstEmpty = null;
+    for (let n = 0; n < 40 && col <= 16384; n++) {
+      const cell = mergeOf(sh, col, m.r1);
+      if (!this._empty(sh, cell.c1, cell.r1)) break;          // next printed label: stop
+      if (cell.c2 > cell.c1) return result(cell);              // first merged box wins
+      if (!firstEmpty) firstEmpty = cell;
+      col = cell.c2 + 1;
+    }
+    return firstEmpty ? result(firstEmpty) : null;
+  };
+
+  /* Date boxes: the ISA forms print "Year / Month / Day" labels, with the number box just LEFT of each label. */
+  Template.prototype._dateTargets = function (hit) {
+    const sh = this.sheets[hit.si], m = mergeOf(sh, hit.col, hit.row), self = this;
+    const labels = this._scanLabels().filter(function (l) {
+      return l.si === hit.si && l.row >= m.r1 - 1 && l.row <= m.r2 + 1 && l.col > m.c2;
+    });
+    const rxs = [/(^|[\s\n])year\s*$/i, /(^|[\s\n])month\s*$/i, /(^|[\s\n])day\s*$/i];
+    let prevCol = m.c2, out = [];
+    for (let i = 0; i < 3; i++) {
+      const l = labels.find(function (x) { return x.col > prevCol && x.text.length <= 14 && rxs[i].test(x.text); });
+      if (!l) return null;
+      const lm = mergeOf(sh, l.col, l.row);
+      if (lm.c1 < 2) return null;
+      const box = mergeOf(sh, lm.c1 - 1, l.row);
+      if (!self._empty(sh, box.c1, box.r1)) return null;
+      out.push((this.sheets.length > 1 ? sh.name + '!' : '') + addrOf(box.c1, box.r1));
+      prevCol = lm.c2;
+    }
+    return out.join(',');
   };
 
   /* Returns { key: { spec, label } } for every field whose label chain was found. */
@@ -260,7 +290,13 @@
         prev = hit;
       }
       if (!hit) return;
-      const tg = self._target(hit, !!f.hint[f.hint.length - 1].below);
+      if (f.type === 'select') return;   // circle options (Male/Female etc.): set by hand, a text guess lands in the wrong place
+      const below = !!f.hint[f.hint.length - 1].below;
+      if (f.type === 'date' && !below) {
+        const ds = self._dateTargets(hit);
+        if (ds) { out[f.key] = { spec: ds, label: hit.text.split(/\r?\n/).pop().trim() }; return; }
+      }
+      const tg = self._target(hit, below);
       if (!tg) return;
       out[f.key] = { spec: (multi ? self.sheets[tg.si].name + '!' : '') + tg.addr, label: hit.text.split(/\r?\n/).pop().trim() };
     });

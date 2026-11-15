@@ -1,5 +1,5 @@
 /* Offline support: cache the app files, refresh them in the background. */
-const CACHE = 'visa-helper-v3';
+const CACHE = 'visa-helper-v4';
 const ASSETS = ['./', 'index.html', 'style.css', 'schema.js', 'xlsx-fill.js', 'xlsx-write.js', 'app.js',
   'jszip.min.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 
