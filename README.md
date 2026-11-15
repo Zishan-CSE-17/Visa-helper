@@ -34,6 +34,7 @@ When the boxes are all correct, press **Save cell map (.json)**, rename the file
 | `xlsx-fill.js` | edits the Excel file directly inside the zip, so drawings, validation and formatting stay untouched |
 | `xlsx-write.js` | simple data-list Excel export |
 | `app.js` | the app |
+| `checklist.js` | document checklist (which papers to prepare) |
 | `jszip.min.js` | zip library (MIT), included so nothing loads from the internet |
 | `sw.js`, `manifest.webmanifest`, `icon-*.png` | offline mode and phone install |
 | `mapping.json` | optional shared cell map |

@@ -268,7 +268,7 @@
       if (lm.c1 < 2) return null;
       const box = mergeOf(sh, lm.c1 - 1, l.row);
       if (!self._empty(sh, box.c1, box.r1)) return null;
-      out.push((this.sheets.length > 1 ? sh.name + '!' : '') + addrOf(box.c1, box.r1));
+      out.push((hit.si !== 0 ? sh.name + '!' : '') + addrOf(box.c1, box.r1));
       prevCol = lm.c2;
     }
     return out.join(',');
@@ -276,7 +276,8 @@
 
   /* Returns { key: { spec, label } } for every field whose label chain was found. */
   Template.prototype.guess = function (fields) {
-    const labels = this._scanLabels(), out = {}, self = this, multi = this.sheets.length > 1;
+    /* Only the first sheet (applicant part 1) is searched: other sheets hold the employer/part 2/part 3 forms with the same words. */
+    const labels = this._scanLabels().filter(function (l) { return l.si === 0; }), out = {}, self = this, multi = false;
     fields.forEach(function (f) {
       if (!f.hint) return;
       let prev = null, hit = null;

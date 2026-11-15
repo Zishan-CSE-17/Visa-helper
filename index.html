@@ -25,7 +25,7 @@
   </div>
   <div class="progress" role="progressbar" aria-label="Form completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="bar" class="bar"></div></div>
   <nav class="steps" aria-label="Steps">
-    <a href="#s-get">1 Get form</a><a href="#s-details">2 Details</a><a href="#s-fill">3 Fill Excel</a><a href="#s-more">4 More</a>
+    <a href="#s-get">1 Get form</a><a href="#s-docs">Documents</a><a href="#s-details">2 Details</a><a href="#s-fill">3 Fill Excel</a><a href="#s-more">4 More</a>
   </nav>
 </header>
 
@@ -48,6 +48,16 @@
       <li><a href="https://www.moj.go.jp/isa/applications/procedures/16-3.html" target="_blank" rel="noopener noreferrer">Procedure guide and required documents</a></li>
     </ul>
     <p class="hint">For Student to work visa you also need the part 2 form for your new job type and your employer’s documents. Apply before your period of stay ends (from 3 months before).</p>
+  </section>
+
+  <section class="card" id="s-docs" aria-labelledby="h-docs">
+    <div class="card-head"><span class="step">&#10003;</span><h2 id="h-docs">Documents to prepare</h2><span id="docProg" class="chip" role="status"></span></div>
+    <p>Tick each paper when it is ready. The list follows the application you choose in step 2. Ticks are saved on this device.</p>
+    <p class="hint">Required papers can differ by your school, your employer’s category and your case. Always confirm on the ISA page below and with the immigration office, and bring anything extra they ask for.</p>
+    <div id="docList"></div>
+    <div class="buttons"><button type="button" id="btnDocClear" class="btn small secondary">Clear ticks</button></div>
+    <ul class="links"><li><a href="https://www.moj.go.jp/isa/applications/procedures/16-3.html" target="_blank" rel="noopener noreferrer">Official procedure guide and required documents (ISA)</a></li>
+    <li><a href="https://www.studyinjapan.go.jp/en/work-in-japan/immigration-procedures/" target="_blank" rel="noopener noreferrer">Student to work visa: document list (Study in Japan)</a></li></ul>
   </section>
 
   <section class="card" id="s-details" aria-labelledby="h-details">
@@ -136,5 +146,6 @@
 <script src="xlsx-fill.js"></script>
 <script src="xlsx-write.js"></script>
 <script src="app.js"></script>
+<script src="checklist.js"></script>
 </body>
 </html>

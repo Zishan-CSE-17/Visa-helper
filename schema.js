@@ -108,13 +108,13 @@
     { key: 'rc', label: 'Residence card number', type: 'text', upper: true, hint: [{ rx: 'residence card number', last: true, below: true }] }
   ];
 
-  VH.FULLNAME = { key: 'fullname', no: '3', label: 'Full name in ONE box (family + given)', type: 'text', derived: true, hint: null };
+  VH.FULLNAME = { key: 'fullname', no: '3', label: 'Full name (family name + given name, one box)', type: 'text', derived: true, hint: [{ rx: '^name$' }] };
 
   // Every field that can be written into the official Excel, for the cell-map table.
   VH.mapFields = function (mode) {
     const list = [];
     VH.sections(mode).forEach(function (s) {
-      s.fields.forEach(function (f) { if (!f.note && f.key !== 'crimdetail') list.push(f); });
+      s.fields.forEach(function (f) { if (!f.note && f.key !== 'crimdetail' && f.key !== 'family' && f.key !== 'given') list.push(f); });
     });
     list.push(VH.FULLNAME);
     VH.FAMILY.forEach(function (f) { list.push({ key: 'fam.' + f.key, fam: f.key, no: '16', label: 'Family table: ' + f.label,

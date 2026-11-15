@@ -134,3 +134,17 @@ footer{color:var(--muted);font-size:.8rem;padding-bottom:48px;text-align:center}
   .print-only td.item{width:38%}
   .print-only .note{font-size:9pt;color:#444}
 }
+
+/* document checklist */
+.docgroup h3{margin:16px 0 2px}
+.docgroup>.help{margin:0 2px 6px}
+.docitem{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;margin:6px 0;border-radius:10px;background:var(--field);cursor:pointer}
+.docitem input{width:22px;height:22px;margin-top:2px;flex:none;accent-color:var(--green)}
+.docbody{display:flex;flex-direction:column;min-width:0}
+.doctitle{font-weight:600}
+.docnote{font-size:.84rem;color:var(--muted)}
+.docitem:has(input:checked) .doctitle{text-decoration:line-through;opacity:.7}
+@media print{#s-docs{display:none}}
+
+.jp{font-size:.88rem;color:var(--blue);font-weight:600}
+.docitem:has(input:checked) .jp{opacity:.7}
